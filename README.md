@@ -29,31 +29,114 @@
 
 ## 安装
 
-技能包就是一个目录，`SKILL.md` 在根上。把整个仓库放到任意一个技能根目录下即可。
+技能包就是一个文件夹，`SKILL.md` 在最外层。放到 agent 的技能根目录下即可，不需要编译、不需要装依赖。
 
-### DeepSeek Harness
+### 0. 先确认两件事
+
+**一、有没有 git。** 终端里跑 `git --version`，能打出版本号就往下走；没有就跳到[方式二](#方式二不装-git直接下载)。
+
+**二、技能根目录在哪。** DeepSeek Harness 是 `~/.dsh/skills`（Windows 为 `%USERPROFILE%\.dsh\skills`）。目录不存在就先建：
+
+```bash
+mkdir -p ~/.dsh/skills
+```
+
+```powershell
+New-Item -ItemType Directory -Force "$env:USERPROFILE\.dsh\skills"
+```
+
+### 方式一：git clone（推荐，方便以后更新）
+
+macOS / Linux：
 
 ```bash
 git clone https://github.com/<you>/divorce-lawyer.git ~/.dsh/skills/divorce-lawyer
 ```
 
-Windows：
+Windows PowerShell：
 
 ```powershell
 git clone https://github.com/<you>/divorce-lawyer.git "$env:USERPROFILE\.dsh\skills\divorce-lawyer"
 ```
 
-放好后无需重启，新开一个会话就能在技能目录里看到它。
+克隆目标路径已经写死在命令里，不用事后改名。
 
-### 其他兼容 SKILL.md 的 Agent
+### 方式二：不装 git，直接下载
 
-任何读取 `SKILL.md`（YAML frontmatter + Markdown 正文）的框架都能直接用。把它放进该框架的技能目录，或把 `SKILL.md` 的内容并入系统提示词。资源文件按 `SKILL.md` 中给出的相对路径解析到仓库根目录。
+1. 打开仓库页面 → 绿色的 **Code** 按钮 → **Download ZIP**
+2. 解压，得到一个 `divorce-lawyer-main` 文件夹
+3. 把它**重命名为 `divorce-lawyer`**（去掉 `-main`），整体移到技能根目录下
+
+### 装完长这样
+
+```
+~/.dsh/skills/
+└─ divorce-lawyer/
+   ├─ SKILL.md          ← 必须在这一层
+   ├─ references/
+   └─ tools/
+```
+
+**多套一层就读不到。** 比如 `~/.dsh/skills/divorce-lawyer/divorce-lawyer/SKILL.md`——技能发现只扫根目录下的一层子目录，不会往里递归。这是装完不显示的头号原因。
+
+### 验证装好了
+
+任选一种：
+
+```bash
+ls ~/.dsh/skills/divorce-lawyer/SKILL.md                  # 文件在，说明路径对
+python3 ~/.dsh/skills/divorce-lawyer/tools/validate.py    # 输出「全部检查通过」
+```
+
+或者回到 agent 新开一个会话，技能列表里应该出现 `divorce-lawyer`。直接问一句「我想离婚，房子是我爸妈出钱买的」，看它有没有按「现状判断 / 核心风险 / 立即要做的事」六段来答。
+
+> Windows 上把 `python3` 换成 `python`，`ls` 换成 `dir`。
+
+> 已经开着的会话不会立刻刷新技能列表，新开一个就行。
 
 ### 更新
 
 ```bash
 cd ~/.dsh/skills/divorce-lawyer && git pull
 ```
+
+ZIP 方式装的，重新下一次覆盖即可。
+
+### 卸载
+
+删掉文件夹就行：
+
+```bash
+rm -rf ~/.dsh/skills/divorce-lawyer
+```
+
+```powershell
+Remove-Item -Recurse -Force "$env:USERPROFILE\.dsh\skills\divorce-lawyer"
+```
+
+### 只想在某个项目里用
+
+放进项目根目录的 `.dsh/skills/`，不要动用户目录：
+
+```bash
+mkdir -p .dsh/skills
+git clone https://github.com/<you>/divorce-lawyer.git .dsh/skills/divorce-lawyer
+```
+
+项目级优先于用户级，两边同名时项目里那份生效。
+
+### 装不上？先对照这四条
+
+| 现象 | 原因 | 处理 |
+|---|---|---|
+| 技能列表里没有 | 多套了一层目录 | 确认 `.../divorce-lawyer/SKILL.md` 能直接访问 |
+| `destination path already exists` | 之前装过一份 | `cd` 进去 `git pull`；或先删旧目录再克隆 |
+| 克隆卡住 / 超时 | 访问 GitHub 受限 | 改用方式二下 ZIP，或给 git 配代理 |
+| 提示 `SKILL.md` 缺少 frontmatter | 存下来的是网页 HTML，不是仓库 | 用 Code → Download ZIP，别用「网页另存为」 |
+
+### 其他框架
+
+任何读取 `SKILL.md`（YAML frontmatter + Markdown 正文）的 agent 框架都能直接用：把文件夹放进它的技能目录，目录层级要求与上面一致。若该框架不支持外部资源文件，可只取 `SKILL.md` 正文并入系统提示词，并把 `references/` 放在同目录下——正文里的路径都是相对仓库根目录写的。
 
 ## 目录结构
 

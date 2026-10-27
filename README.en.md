@@ -24,21 +24,75 @@ other jurisdictions.
 
 ## Install
 
-The repository root **is** the skill bundle (`SKILL.md` sits at the top).
+The repository root **is** the skill bundle — `SKILL.md` sits at the top level.
+No build step, no dependencies.
+
+### 1. Check the basics
+
+You need `git` (skip to *Without git* below if you don't have it), and you need
+to know your agent's skill root. For DeepSeek Harness it is `~/.dsh/skills`
+(`%USERPROFILE%\.dsh\skills` on Windows). Create it if missing:
+
+```bash
+mkdir -p ~/.dsh/skills
+```
+
+```powershell
+New-Item -ItemType Directory -Force "$env:USERPROFILE\.dsh\skills"
+```
+
+### 2. Clone into that root
 
 ```bash
 git clone https://github.com/<you>/divorce-lawyer.git ~/.dsh/skills/divorce-lawyer
 ```
 
-Windows PowerShell:
-
 ```powershell
 git clone https://github.com/<you>/divorce-lawyer.git "$env:USERPROFILE\.dsh\skills\divorce-lawyer"
 ```
 
-Any framework that reads a `SKILL.md` (YAML frontmatter + Markdown body) can
-consume it: drop the folder into that framework's skill directory, or fold the
-`SKILL.md` body into the system prompt and keep `references/` alongside it.
+### Without git
+
+Download the ZIP from the **Code** button, extract it, rename
+`divorce-lawyer-main` to `divorce-lawyer`, and move it into the skill root.
+
+### The layout must end up exactly like this
+
+```
+~/.dsh/skills/
+└─ divorce-lawyer/
+   ├─ SKILL.md          ← at this level, not one deeper
+   ├─ references/
+   └─ tools/
+```
+
+Skill discovery scans **one** directory level. A nested copy
+(`.../divorce-lawyer/divorce-lawyer/SKILL.md`) is silently ignored — that is the
+most common reason a freshly installed skill does not appear.
+
+### Verify
+
+```bash
+ls ~/.dsh/skills/divorce-lawyer/SKILL.md
+python3 ~/.dsh/skills/divorce-lawyer/tools/validate.py    # prints all checks passed
+```
+
+Or open a fresh agent session and check that `divorce-lawyer` shows up in the
+skill list. Sessions that were already open do not re-scan immediately.
+
+### Update / uninstall
+
+```bash
+cd ~/.dsh/skills/divorce-lawyer && git pull   # update
+rm -rf ~/.dsh/skills/divorce-lawyer           # uninstall
+```
+
+### Other frameworks
+
+Any agent that reads a `SKILL.md` (YAML frontmatter + Markdown body) can use it:
+drop the folder into that framework's skill directory, keeping the same layout.
+If the framework has no resource loading, inline the `SKILL.md` body into the
+system prompt and keep `references/` beside it.
 
 ## Layout
 
